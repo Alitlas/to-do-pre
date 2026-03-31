@@ -11,19 +11,18 @@ const listElement = document.querySelector(".to-do__list");
 const formElement = document.querySelector(".to-do__form");
 const inputElement = document.querySelector(".to-do__input");
 
-// Загрузка задач из localStorage или начального массива
 function loadTasks() {
-  const savedTasks = localStorage.getItem("tasks");
+  const savedTasks = localStorage.getItem("tasksList");
   if (savedTasks) {
     return JSON.parse(savedTasks);
   }
   return [...items];
 }
 
-// Создание элемента задачи
 function createItem(item) {
   const template = document.getElementById("to-do__item-template");
   const clone = template.content.querySelector(".to-do__item").cloneNode(true);
+  
   const textElement = clone.querySelector(".to-do__item-text");
   const deleteButton = clone.querySelector(".to-do__item-button_type_delete");
   const duplicateButton = clone.querySelector(".to-do__item-button_type_duplicate");
@@ -31,41 +30,38 @@ function createItem(item) {
 
   textElement.textContent = item;
 
-  // Удаление задачи
+  // Удаление
   deleteButton.addEventListener("click", () => {
     clone.remove();
-    const currentItems = getTasksFromDOM();
-    saveTasks(currentItems);
+    saveTasks(getTasksFromDOM());
   });
 
-  // Копирование задачи
+  // Копирование
   duplicateButton.addEventListener("click", () => {
-    const newItem = createItem(textElement.textContent);
+    const newItem = createItem(item);
     listElement.prepend(newItem);
-    const currentItems = getTasksFromDOM();
-    saveTasks(currentItems);
+    saveTasks(getTasksFromDOM());
   });
 
-  // Редактирование задачи
+  // Редактирование
   editButton.addEventListener("click", () => {
     textElement.setAttribute("contenteditable", "true");
     textElement.focus();
   });
 
   textElement.addEventListener("blur", () => {
-    textElement.removeAttribute("contenteditable");
-    const currentItems = getTasksFromDOM();
-    saveTasks(currentItems);
+    textElement.setAttribute("contenteditable", "false");
+    saveTasks(getTasksFromDOM());
   });
 
   return clone;
 }
 
-// Получение текущего списка задач из DOM
+// Сбор задач из разметки в массив
 function getTasksFromDOM() {
+  const itemsNamesElements = document.querySelectorAll(".to-do__item-text");
   const tasks = [];
-  const taskElements = document.querySelectorAll(".to-do__item-text");
-  taskElements.forEach((el) => {
+  itemsNamesElements.forEach((el) => {
     tasks.push(el.textContent);
   });
   return tasks;
@@ -73,27 +69,26 @@ function getTasksFromDOM() {
 
 // Сохранение задач в localStorage
 function saveTasks(tasks) {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("tasksList", JSON.stringify(tasks));
 }
 
-// Добавление новой задачи из формы
-formElement.addEventListener("submit", (e) => {
-  e.preventDefault();
+// добавление новой задачи
+formElement.addEventListener("submit", (event) => {
+  event.preventDefault(); // нет перезагрузке
+
   const newTaskText = inputElement.value.trim();
   if (newTaskText === "") return;
 
-  const newTask = createItem(newTaskText);
-  listElement.prepend(newTask);
-
-  const currentItems = getTasksFromDOM();
-  saveTasks(currentItems);
+  const newItem = createItem(newTaskText);
+  listElement.prepend(newItem);
+  saveTasks(getTasksFromDOM());
 
   inputElement.value = "";
+  inputElement.focus();
 });
 
-// Инициализация при загрузке страницы
+// Инициализация при загрузке
 const initialTasks = loadTasks();
 initialTasks.forEach((task) => {
-  const taskElement = createItem(task);
-  listElement.append(taskElement);
+  listElement.append(createItem(task));
 });
